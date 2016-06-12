@@ -1,5 +1,6 @@
 var path = require('path');
 var webpack = require('webpack');
+var ExtractTextPlugin = require("extract-text-webpack-plugin");
 
 var PROD = (process.env.NODE_ENV === 'production');
 
@@ -7,6 +8,19 @@ module.exports = {
   entry: ['bootstrap-loader', './client/index.js'],
   output: { path: __dirname, filename: '/client/bundle.js' },
   devtool: 'source-map',
+  plugins: PROD ? [
+    new webpack.DefinePlugin({
+      "process.env": {
+        NODE_ENV: JSON.stringify("production")
+      }
+    }),
+    new webpack.optimize.UglifyJsPlugin({
+      compress: {
+        warnings: false
+      }
+    }),
+    new ExtractTextPlugin("./client/style.css", {allChunks: true})
+  ] : [new ExtractTextPlugin("./client/style.css", {allChunks: true})],
   module: {
     loaders: [
       {
@@ -17,9 +31,13 @@ module.exports = {
           presets: ['es2015', 'react']
         }
       },
+      // {
+      //   test: /\.scss$/,
+      //   loaders: ["style", "css?sourceMap", "sass?sourceMap"]
+      // },
       {
         test: /\.scss$/,
-        loaders: ["style", "css?sourceMap", "sass?sourceMap"]
+        loader: ExtractTextPlugin.extract('style','css!sass')
       },
       {
         test: /\.json$/,
@@ -39,16 +57,5 @@ module.exports = {
     'react/lib/ReactContext': 'window',
     'react/addons': true,
   },
-  plugins: PROD ? [
-    new webpack.DefinePlugin({
-      "process.env": {
-        NODE_ENV: JSON.stringify("production")
-      }
-    }),
-    new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        warnings: false
-      }
-    })
-  ] : [],
+
 };
